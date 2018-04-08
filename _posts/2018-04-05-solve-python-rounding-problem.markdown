@@ -5,7 +5,7 @@ date:   2018-04-05 08:00:30 +0800
 categories: python
 ---
 -   python version:2.7.9
--   problem:when use rounding, the results is not inaccurate, for example：
+-   problem decription: when use rounding, the results is not inaccurate, for example：
 
         >>> round(2.655,2)
         2.65
