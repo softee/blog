@@ -1,1 +1,1 @@
-Recording coding persional coding problems and some thoughts. This blog is based on minima model.
+Recording persional coding problems and some thoughts. This blog is based on minima model.
