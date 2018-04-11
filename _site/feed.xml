@@ -1,5 +1,233 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-04-08T10:32:30+08:00</updated><id>http://localhost:4000/</id><title type="html">Peter Xiong</title><subtitle>coding and record some thoughts.
-</subtitle><author><name>softee</name></author><entry><title type="html">solve python rounding problem</title><link href="http://localhost:4000/python/2018/04/05/solve-python-rounding-problem.html" rel="alternate" type="text/html" title="solve python rounding problem" /><published>2018-04-05T08:00:30+08:00</published><updated>2018-04-05T08:00:30+08:00</updated><id>http://localhost:4000/python/2018/04/05/solve-python-rounding-problem</id><content type="html" xml:base="http://localhost:4000/python/2018/04/05/solve-python-rounding-problem.html">&lt;ul&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-04-11T16:06:22+08:00</updated><id>http://localhost:4000/</id><title type="html">Peter Xiong</title><subtitle>coding and record some thoughts.
+</subtitle><author><name>softee</name></author><entry><title type="html">create python webservice and deployed by apache</title><link href="http://localhost:4000/python/2018/04/11/apache-deploy-python-webservice.html" rel="alternate" type="text/html" title="create python webservice and deployed by apache" /><published>2018-04-11T14:36:30+08:00</published><updated>2018-04-11T14:36:30+08:00</updated><id>http://localhost:4000/python/2018/04/11/apache-deploy-python-webservice</id><content type="html" xml:base="http://localhost:4000/python/2018/04/11/apache-deploy-python-webservice.html">&lt;ul&gt;
+  &lt;li&gt;environment
+    &lt;ul&gt;
+      &lt;li&gt;python version:2.7.9&lt;/li&gt;
+      &lt;li&gt;os: window 7 32bit&lt;/li&gt;
+      &lt;li&gt;windows runtime: VC9&lt;/li&gt;
+      &lt;li&gt;apache version: 2.4.12&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;server
+    &lt;ul&gt;
+      &lt;li&gt;download and install python module &lt;code class=&quot;highlighter-rouge&quot;&gt;soaplib&lt;/code&gt; for server
+        &lt;ul&gt;
+          &lt;li&gt;download address: &lt;a href=&quot;https://github.com/soaplib/soaplib.git&quot;&gt;https://github.com/soaplib/soaplib.git&lt;/a&gt;&lt;/li&gt;
+          &lt;li&gt;cd soaplib&lt;/li&gt;
+          &lt;li&gt;python setup.py install&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;server code. create file server.wsgi as belows:&lt;/p&gt;
+
+        &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# coding:utf-8
+# author:peter 2018-04-11
+
+import soaplib
+from soaplib.core.service import rpc, DefinitionBase
+from soaplib.core.model.primitive import String, Integer, Boolean
+from soaplib.core.server import wsgi
+from soaplib.core.model.clazz import Array
+from soaplib.core.service import soap
+from soaplib.core.model.clazz import ClassModel
+from wsgiref.simple_server import make_server
+
+
+class Data(ClassModel):
+    &quot;&quot;&quot;
+    :function: create `Data` dictionary as datatype
+    &quot;&quot;&quot;
+    __namespace__ = &quot;Data&quot;
+    username = String
+    emotion = String
+
+
+class ExportService(DefinitionBase):
+    &quot;&quot;&quot;
+    :function:create functions `say_hello` and `get_recommend`
+    :return: dictionay
+    &quot;&quot;&quot;
+    @soap(String, Integer, _returns=Array(String))
+    def say_hello(self, name, times):
+        results = []
+        for i in range(0, times):
+            results.append('Hello, %s' % name)
+        return results
+
+    @soap(Data, _returns=Boolean)
+    def get_recommend(self, data):
+        print data.username
+        print data.emotion
+        return 1
+                
+try:
+    soap_application = soaplib.core.Application([ExportService], 'tns')
+    application = wsgi.Application(soap_application)
+    server = make_server('localhost', 8888, application)
+    server.serve_forever()
+except ImportError:
+    print &quot;Error: example server code requires Python &amp;gt;= 2.5&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;client
+    &lt;ul&gt;
+      &lt;li&gt;install python module &lt;code class=&quot;highlighter-rouge&quot;&gt;suds&lt;/code&gt; for client.
+        &lt;ul&gt;
+          &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pip install suds-jurko&lt;/code&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;client code. create file client.py as belows:&lt;/p&gt;
+
+        &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# coding:utf-8
+# author:peter 2018-04-11
+
+from suds.client import Client
+
+def get_client():
+    &quot;&quot;&quot;
+    :function:call webservice
+    :return:
+    &quot;&quot;&quot;
+    client = Client('http://localhost:8888/?wsdl')
+    client.options.cache.clear()
+    return client
+
+
+def get_recommend():
+    &quot;&quot;&quot;
+    :function:call method `get_recommend` by dictionary `data`
+    :return:
+    &quot;&quot;&quot;
+    data={
+        &quot;username&quot;:&quot;alle&quot;,
+        &quot;emotion&quot;:&quot;1-2-3&quot;
+    }
+    print 'call get_recommend'
+    client = get_client()
+    result = client.service.get_recommend(data)
+    print result
+
+
+def say_hello():
+    &quot;&quot;&quot;
+    :function:call method `say_hello` by passing two params `name` and `times`
+    :return:
+    &quot;&quot;&quot;
+    name = '123'
+    times = 2
+    print 'call say_hello'
+    client = get_client()
+    result = client.service.say_hello(name,times)
+    print result
+
+
+if __name__ == '__main__':
+    print '====start======'
+    # get_recommend()
+    say_hello()
+    print '=====end======'
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;        &lt;/div&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;test
+    &lt;ul&gt;
+      &lt;li&gt;open cmd
+        &lt;ul&gt;
+          &lt;li&gt;run server: &lt;code class=&quot;highlighter-rouge&quot;&gt;python server.wsgi&lt;/code&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;open a new cmd
+        &lt;ul&gt;
+          &lt;li&gt;run client: &lt;code class=&quot;highlighter-rouge&quot;&gt;python client.py&lt;/code&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;deployed by apache2.4
+    &lt;ul&gt;
+      &lt;li&gt;download windows version, select apache-2.4.12
+        &lt;ul&gt;
+          &lt;li&gt;&lt;a href=&quot;https://www.apachehaus.com/cgi-bin/download.plx&quot;&gt;https://www.apachehaus.com/cgi-bin/download.plx&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;download module for vc9
+        &lt;ul&gt;
+          &lt;li&gt;mod_wsgi-windows-4.4.6.tar.gz&lt;/li&gt;
+          &lt;li&gt;unzip file and copy file &lt;code class=&quot;highlighter-rouge&quot;&gt;Apache24-win32-VC9\mod_wsgi-py27-VC9.so&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;apache\modules\&lt;/code&gt;&lt;/li&gt;
+          &lt;li&gt;or download &lt;a href=&quot;https://github.com/GrahamDumpleton/mod_wsgi&quot;&gt;https://github.com/GrahamDumpleton/mod_wsgi&lt;/a&gt; and install mod_wsgi&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;modify apache config
+        &lt;ul&gt;
+          &lt;li&gt;file: apache/conf/httpd.conf&lt;/li&gt;
+          &lt;li&gt;change params as your environment
+            &lt;ul&gt;
+              &lt;li&gt;apache address &lt;code class=&quot;highlighter-rouge&quot;&gt;Define SRVROOT &quot;D:/Apache24&quot;&lt;/code&gt;&lt;/li&gt;
+              &lt;li&gt;port &lt;code class=&quot;highlighter-rouge&quot;&gt;Listen 8080&lt;/code&gt;&lt;/li&gt;
+              &lt;li&gt;server name &lt;code class=&quot;highlighter-rouge&quot;&gt;ServerName 127.0.0.1:8080&lt;/code&gt;&lt;/li&gt;
+              &lt;li&gt;
+                &lt;p&gt;cancel setting&lt;/p&gt;
+
+                &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#&amp;lt;Directory /&amp;gt;
+#    AllowOverride none
+#    Require all denied
+#&amp;lt;/Directory&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;                &lt;/div&gt;
+              &lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+          &lt;li&gt;
+            &lt;p&gt;add codes at the end:&lt;/p&gt;
+
+            &lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;LoadModule wsgi_module modules/mod_wsgi-py27-VC9.so
+AddType text/html .py
+
+WSGIPythonHome D:/Python27
+WSGIScriptAlias / D:/webservice/serve.wsgi
+&amp;lt;Directory D:/Webplat/Runtime/&amp;gt;
+    AllowOverride None
+    Options None
+    Require all granted
+&amp;lt;/Directory&amp;gt;
+WSGIApplicationGroup %{GLOBAL}
+
+AcceptFilter http none 
+AcceptFilter https none 
+EnableSendfile Off  
+EnableMMAP off
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;            &lt;/div&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;run apache
+        &lt;ul&gt;
+          &lt;li&gt;cd /d D:\Webplat\Apache24\bin&lt;/li&gt;
+          &lt;li&gt;httpd -k restart&lt;/li&gt;
+          &lt;li&gt;call apache service
+            &lt;ul&gt;
+              &lt;li&gt;open Browser and enter &lt;a href=&quot;http://localhost:8080&quot;&gt;http://localhost:8080&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+          &lt;li&gt;call python service
+            &lt;ul&gt;
+              &lt;li&gt;open Browser and enter &lt;a href=&quot;http://localhost:8888?wsdl&quot;&gt;http://localhost:8888?wsdl&lt;/a&gt;,then you will see service infomation.&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;test client
+        &lt;ul&gt;
+          &lt;li&gt;open cmd&lt;/li&gt;
+          &lt;li&gt;run client &lt;code class=&quot;highlighter-rouge&quot;&gt;python client.py&lt;/code&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</content><author><name>softee</name></author><summary type="html">environment python version:2.7.9 os: window 7 32bit windows runtime: VC9 apache version: 2.4.12 server download and install python module soaplib for server download address: https://github.com/soaplib/soaplib.git cd soaplib python setup.py install server code. create file server.wsgi as belows:</summary></entry><entry><title type="html">solve python rounding problem</title><link href="http://localhost:4000/python/2018/04/05/solve-python-rounding-problem.html" rel="alternate" type="text/html" title="solve python rounding problem" /><published>2018-04-05T08:00:30+08:00</published><updated>2018-04-05T08:00:30+08:00</updated><id>http://localhost:4000/python/2018/04/05/solve-python-rounding-problem</id><content type="html" xml:base="http://localhost:4000/python/2018/04/05/solve-python-rounding-problem.html">&lt;ul&gt;
   &lt;li&gt;python version:2.7.9&lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;problem decription: when use rounding, the results is not inaccurate, for example：&lt;/p&gt;
